@@ -1,5 +1,7 @@
 # Transaction Lab
 
+[![Build and tests](https://github.com/Sevyn1/transaction-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/Sevyn1/transaction-lab/actions/workflows/ci.yml)
+
 A small portfolio application for exploring **fictional CAD expenses**. Java/Spring Boot exposes a validated REST API, React displays and adds expenses, and Python validates CSV input before submitting records. It demonstrates API design, SQL persistence, decimal arithmetic, data validation, and error handling in one runnable example.
 
 Created as an AI-assisted portfolio project in October 2026. This is independent of TD and uses no bank or customer data. It is a local development demo, not a banking system.
@@ -27,11 +29,11 @@ The frontend never fabricates success when the API fails. Category filters apply
 
 ## Run locally
 
-Prerequisites: JDK 17, Maven 3.6.3+, Node 22.12+ (or a supported newer release), Python 3.12.
+Prerequisites: JDK 17, Node 22.12+ (or a supported newer release), Python 3.12. The included Maven wrapper downloads the pinned Maven version on first use.
 
 ```sh
 # Terminal 1, from the repository root
-mvn -f backend/pom.xml spring-boot:run
+./backend/mvnw -f backend/pom.xml spring-boot:run
 
 # Terminal 2
 cd frontend
@@ -39,7 +41,7 @@ npm ci
 npm run dev
 ```
 
-Open the URL printed by Vite (normally http://127.0.0.1:5173). The API binds to `127.0.0.1:8080`. Three fictional seed records are inserted once by the migration. State is stored under `backend/data` when started with the Maven command above. To reset the demo, stop the API and remove only its generated database files.
+Open the URL printed by Vite (normally http://127.0.0.1:5173). The API binds to `127.0.0.1:8080`. Three fictional seed records are inserted once by the migration. Generated database files are stored in a `data` directory relative to the API process working directory. To reset the demo, stop the API and remove only its generated database files.
 
 ```sh
 # Validate sample records without changing the database
@@ -74,7 +76,7 @@ Amounts must be positive with at most two decimal places and at most ten digits 
 ## Verification
 
 ```sh
-mvn -f backend/pom.xml verify
+./backend/mvnw -f backend/pom.xml verify
 cd frontend
 npm test
 npm run build
@@ -84,11 +86,9 @@ python -m unittest discover -s tools -v
 
 Tests cover exact 0.10 + 0.20 totals, persistence/read-back, pagination, duplicates, filtering, invalid amounts/dates/currencies, malformed requests, frontend API failure display and filter page resets, and CSV rejection. UI tests use mocked HTTP; Java tests exercise the actual controller, service, SQL database and migration. See `docs/VERIFICATION.md` for the checks actually performed during creation.
 
-## AI assistance and ownership
+## AI-assisted development
 
-Codex generated the initial implementation, tests, and documentation in response to Favour Ojo's request for a Java-focused portfolio project. It then ran checks and corrected problems found during verification. This does not imply Favour wrote every line manually or that this project was completed in a past course/job. The project owner should review and modify the code and be able to explain its behavior before relying on it in an interview.
-
-No language model runs inside this application. It demonstrates **AI-assisted software development**, rather than an AI-powered finance product. Earlier Python/OpenAI and reverse-dictionary work provides separate AI integration experience.
+Created with Codex assistance: implementation, tests, and verification are documented in the repository. This is an independent portfolio project created in October 2026 using fictional data. It demonstrates AI-assisted engineering; no language model runs inside the application.
 
 ## Limits and next improvements
 
@@ -101,3 +101,7 @@ No language model runs inside this application. It demonstrates **AI-assisted so
 ## Interview walkthrough
 
 Start with [docs/INTERVIEW_REVIEW.md](docs/INTERVIEW_REVIEW.md). Explain why the API validates inputs, the unique constraint handles concurrent duplicates, and decimal totals belong on the backend. Then show a rejected record and a passing test. Understanding a small complete application is more useful than memorizing framework names.
+
+## Engineering decisions
+
+See [design decisions](docs/DESIGN_DECISIONS.md) for the implemented choices, tradeoffs, and test boundaries.

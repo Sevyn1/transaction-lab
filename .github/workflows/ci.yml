@@ -10,7 +10,7 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: maven
-      - run: mvn -B -f backend/pom.xml verify
+      - run: ./backend/mvnw -B -f backend/pom.xml verify
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
