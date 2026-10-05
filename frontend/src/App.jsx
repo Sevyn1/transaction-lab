@@ -14,6 +14,7 @@ export default function App() {
     [loading, setLoading] = useState(true),
     [refresh, setRefresh] = useState(0),
     [saving, setSaving] = useState(false),
+    [updatedAt, setUpdatedAt] = useState(null),
     [notice, setNotice] = useState("");
   useEffect(() => {
     let active = true;
@@ -31,6 +32,7 @@ export default function App() {
         if (active) {
           setData(d);
           setSummary(s);
+          setUpdatedAt(new Date());
         }
       })
       .catch((e) => {
@@ -93,8 +95,11 @@ export default function App() {
             ))}
           </select>
         </label>
-        <button onClick={() => setRefresh((v) => v + 1)}>Refresh</button>
+        <button type="button" disabled={loading} onClick={() => setRefresh((v) => v + 1)}>
+          {loading ? "Refreshing…" : "Refresh"}
+        </button>
       </section>
+      {!loading && !error && updatedAt && <p role="status">Updated at {updatedAt.toLocaleTimeString("en-CA")}</p>}
       {loading ? (
         <p role="status">Loading transactions…</p>
       ) : error ? (

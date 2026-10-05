@@ -34,3 +34,13 @@ interventions were applied together, so their individual effects are not isolate
 The proxy also has an eight-second upstream timeout. Temporary diagnostic logging
 was removed; no request cookies or their values were recorded. Visual confirmation
 of the displayed dashboard remains pending because browser automation is blocked.
+
+### Refresh feedback — 5 October 2026
+
+GET requests now use `cache: "no-store"`. The toolbar disables repeated clicks
+while a load is in flight, shows “Refreshing…”, and displays a completion time only
+after both datasets load successfully. A regression test clicks Refresh, verifies
+new requests for both datasets, holds them pending to check feedback, and confirms
+changed records and totals after completion. All 13 interface tests and the UI build
+pass. The user's exact Refresh symptom and live visual confirmation remain pending;
+this change does not establish browser caching as the root cause.

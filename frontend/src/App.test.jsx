@@ -98,3 +98,28 @@ it("leaves loading and offers Retry when requests never resolve", async () => {
   expect(screen.getByRole("alert")).toHaveTextContent("request timed out");
   expect(screen.getByRole("button",{name:"Retry"})).toBeInTheDocument();
 });
+
+it("refreshes both datasets with fresh responses and shows completion", async () => {
+  let release;
+  let refreshed = false;
+  const pause = new Promise(resolve => { release = resolve; });
+  const fetch = vi.fn(async url => {
+    if (refreshed) await pause;
+    return { ok: true, json: async () => url.includes("summary")
+      ? (refreshed ? { total: 42, count: 2 } : summary)
+      : (refreshed ? { items: [{ ...page.items[0], merchant: "New Cafe", amount: 42 }], total: 2 } : page) };
+  });
+  vi.stubGlobal("fetch", fetch);
+  render(<App />);
+  await screen.findByText("Demo Cafe");
+  refreshed = true;
+  fireEvent.click(screen.getByRole("button", { name: "Refresh" }));
+  expect(screen.getByRole("button", { name: "Refreshing…" })).toBeDisabled();
+  await waitFor(() => expect(fetch).toHaveBeenCalledTimes(4));
+  for (const [, options] of fetch.mock.calls) expect(options.cache).toBe("no-store");
+  await act(async () => release());
+  expect(await screen.findByText("New Cafe")).toBeInTheDocument();
+  expect(screen.getByText("$42.00", {selector: "strong"})).toBeInTheDocument();
+  expect(screen.getByRole("status")).toHaveTextContent("Updated at");
+  expect(screen.getByRole("button", { name: "Refresh" })).toBeEnabled();
+});

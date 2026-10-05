@@ -20,7 +20,8 @@ export async function request(url, options = {}) {
       }, timeoutMs);
     });
     const response = (async () => {
-      const result = await fetch(url, { ...fetchOptions, signal: controller.signal });
+      const isRead = !fetchOptions.method || fetchOptions.method.toUpperCase() === "GET";
+      const result = await fetch(url, { ...(isRead ? { cache: "no-store" } : {}), ...fetchOptions, signal: controller.signal });
       let data;
       try { data = await result.json(); }
       catch { throw new Error("The service returned an unreadable response."); }
