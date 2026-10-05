@@ -9,7 +9,7 @@ export async function request(url, options = {}) {
   let timer;
   let timedOut = false;
   const timeoutMessage = fetchOptions.method && fetchOptions.method.toUpperCase() !== "GET"
-    ? "Saving timed out. Refresh the transaction list before retrying."
+    ? `${fetchOptions.method.toUpperCase() === "DELETE" ? "Deleting" : "Saving"} timed out. Refresh the transaction list before retrying.`
     : "The request timed out. Please try again.";
   try {
     const deadline = new Promise((_, reject) => {
@@ -22,6 +22,7 @@ export async function request(url, options = {}) {
     const response = (async () => {
       const isRead = !fetchOptions.method || fetchOptions.method.toUpperCase() === "GET";
       const result = await fetch(url, { ...(isRead ? { cache: "no-store" } : {}), ...fetchOptions, signal: controller.signal });
+      if (result.status === 204 && result.ok) return null;
       let data;
       try { data = await result.json(); }
       catch { throw new Error("The service returned an unreadable response."); }

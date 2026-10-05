@@ -15,6 +15,9 @@ export default function App() {
     [refresh, setRefresh] = useState(0),
     [saving, setSaving] = useState(false),
     [updatedAt, setUpdatedAt] = useState(null),
+    [pendingDelete, setPendingDelete] = useState(null),
+    [deleting, setDeleting] = useState(false),
+    [deleteError, setDeleteError] = useState(""),
     [notice, setNotice] = useState("");
   useEffect(() => {
     let active = true;
@@ -71,6 +74,20 @@ export default function App() {
       setSaving(false);
     }
   }
+  async function remove() {
+    setDeleting(true);
+    setDeleteError("");
+    try {
+      await request(`/api/transactions/${pendingDelete.id}`, { method: "DELETE" });
+      setPendingDelete(null);
+      setPage(0);
+      setRefresh((v) => v + 1);
+    } catch (e) {
+      setDeleteError(e.message);
+    } finally {
+      setDeleting(false);
+    }
+  }
   return (
     <main>
       <header>
@@ -100,6 +117,12 @@ export default function App() {
         </button>
       </section>
       {!loading && !error && updatedAt && <p role="status">Updated at {updatedAt.toLocaleTimeString("en-CA")}</p>}
+      {pendingDelete && <section className="delete-confirm" aria-label="Confirm deletion">
+        <p>Delete the {money(pendingDelete.amount)} expense at <strong>{pendingDelete.merchant}</strong>? This cannot be undone.</p>
+        <button type="button" className="delete-button" disabled={deleting} onClick={remove}>{deleting ? "Deleting…" : "Confirm delete"}</button>{" "}
+        <button type="button" disabled={deleting} onClick={() => { setPendingDelete(null); setDeleteError(""); }}>Cancel</button>
+        {deleteError && <p role="alert">{deleteError}</p>}
+      </section>}
       {loading ? (
         <p role="status">Loading transactions…</p>
       ) : error ? (
@@ -136,6 +159,7 @@ export default function App() {
                       <th>Merchant</th>
                       <th>Category</th>
                       <th>Amount</th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -147,6 +171,7 @@ export default function App() {
                           <span className="tag">{t.category}</span>
                         </td>
                         <td>{money(t.amount)}</td>
+                        <td><button type="button" className="delete-button" aria-label={`Delete expense at ${t.merchant}`} disabled={deleting} onClick={() => { setPendingDelete(t); setDeleteError(""); }}>Delete</button></td>
                       </tr>
                     ))}
                   </tbody>

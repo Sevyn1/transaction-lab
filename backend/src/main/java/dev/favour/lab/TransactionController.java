@@ -35,4 +35,12 @@ public class TransactionController {
   public TransactionService.Summary summary(@RequestParam(required = false) String category) {
     return service.summary(category);
   }
+
+  @DeleteMapping("/transactions/{id}")
+  public ResponseEntity<?> delete(@PathVariable long id) {
+    if (!service.delete(id))
+      return ResponseEntity.status(HttpStatus.NOT_FOUND)
+          .body(java.util.Map.of("error", "Transaction not found. Refresh the list."));
+    return ResponseEntity.noContent().build();
+  }
 }

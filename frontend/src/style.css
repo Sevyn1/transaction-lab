@@ -35,6 +35,18 @@ small,
 footer {
   color: #65767c;
 }
+.delete-button {
+  background: #fff;
+  border-color: #a63535;
+  color: #912b2b;
+}
+.delete-confirm {
+  padding: 16px;
+  border: 1px solid #e9b7ab;
+  border-radius: 8px;
+  background: #fff0ed;
+  margin-bottom: 20px;
+}
 .toolbar {
   display: flex;
   justify-content: space-between;

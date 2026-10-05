@@ -84,6 +84,11 @@ public class TransactionService {
     return new Summary(count == null ? 0 : count, total, "CAD", byCategory);
   }
 
+  public boolean delete(long id) {
+    if (id < 1) throw new IllegalArgumentException("id must be positive");
+    return db.update("DELETE FROM transactions WHERE id=?", id) == 1;
+  }
+
   private void validateCategory(String category) {
     if (category != null && !CATEGORIES.contains(category))
       throw new IllegalArgumentException("Unknown category");

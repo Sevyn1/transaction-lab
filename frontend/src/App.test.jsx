@@ -123,3 +123,36 @@ it("refreshes both datasets with fresh responses and shows completion", async ()
   expect(screen.getByRole("status")).toHaveTextContent("Updated at");
   expect(screen.getByRole("button", { name: "Refresh" })).toBeEnabled();
 });
+
+it("requires confirmation and refreshes the empty table after deletion", async () => {
+  let removed = false;
+  const fetch = vi.fn(async (url, options) => {
+    if (options.method === "DELETE") { removed = true; return { ok: true, status: 204 }; }
+    return { ok: true, json: async () => url.includes("summary")
+      ? (removed ? {total: 0, count: 0} : summary)
+      : (removed ? {items: [], total: 0} : page) };
+  });
+  vi.stubGlobal("fetch", fetch);
+  render(<App />);
+  await screen.findByText("Demo Cafe");
+  fireEvent.click(screen.getByRole("button", {name: "Delete expense at Demo Cafe"}));
+  fireEvent.click(screen.getByRole("button", {name: "Cancel"}));
+  expect(fetch.mock.calls.some(([, options]) => options.method === "DELETE")).toBe(false);
+  fireEvent.click(screen.getByRole("button", {name: "Delete expense at Demo Cafe"}));
+  fireEvent.click(screen.getByRole("button", {name: "Confirm delete"}));
+  expect(await screen.findByText("No transactions match this filter.")).toBeInTheDocument();
+  expect(fetch).toHaveBeenCalledWith("/api/transactions/1", expect.objectContaining({method: "DELETE"}));
+  expect(screen.getByText("$0.00", {selector: "strong"})).toBeInTheDocument();
+  expect(screen.queryByRole("region", {name: "Confirm deletion"})).not.toBeInTheDocument();
+});
+it("keeps the row and displays an error when deletion fails", async () => {
+  vi.stubGlobal("fetch", vi.fn(async (url, options) => options.method === "DELETE"
+    ? {ok: false, json: async () => ({error: "Could not delete"})}
+    : {ok: true, json: async () => url.includes("summary") ? summary : page}));
+  render(<App />);
+  await screen.findByText("Demo Cafe");
+  fireEvent.click(screen.getByRole("button", {name: "Delete expense at Demo Cafe"}));
+  fireEvent.click(screen.getByRole("button", {name: "Confirm delete"}));
+  expect(await screen.findByRole("alert")).toHaveTextContent("Could not delete");
+  expect(screen.getByRole("cell", {name: "Demo Cafe"})).toBeInTheDocument();
+});

@@ -63,6 +63,29 @@ class ApiTest {
   }
 
   @Test
+  void deletionRemovesOnlySelectedRowAndUpdatesSummary() throws Exception {
+    create("A", "10.25");
+    create("B", "20");
+    Long id = db.queryForObject("SELECT id FROM transactions WHERE external_id='A'", Long.class);
+    mvc.perform(delete("/api/transactions/" + id)).andExpect(status().isNoContent());
+    mvc.perform(get("/api/transactions"))
+        .andExpect(jsonPath("$.total").value(1))
+        .andExpect(jsonPath("$.items[0].externalId").value("B"));
+    mvc.perform(get("/api/summary"))
+        .andExpect(jsonPath("$.count").value(1))
+        .andExpect(jsonPath("$.total").value(20));
+    mvc.perform(delete("/api/transactions/" + id)).andExpect(status().isNotFound());
+  }
+
+  @Test
+  void invalidDeleteIdDoesNotRemoveRows() throws Exception {
+    create("A", "10");
+    mvc.perform(delete("/api/transactions/0")).andExpect(status().isBadRequest());
+    mvc.perform(delete("/api/transactions/not-an-id")).andExpect(status().isBadRequest());
+    mvc.perform(get("/api/summary")).andExpect(jsonPath("$.count").value(1));
+  }
+
+  @Test
   void zeroAndNegativeAreRejected() throws Exception {
     for (String amount : new String[] {"0", "-1"})
       mvc.perform(

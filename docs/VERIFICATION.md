@@ -44,3 +44,16 @@ new requests for both datasets, holds them pending to check feedback, and confir
 changed records and totals after completion. All 13 interface tests and the UI build
 pass. The user's exact Refresh symptom and live visual confirmation remain pending;
 this change does not establish browser caching as the root cause.
+
+### Expense deletion — 5 October 2026
+
+Each table row offers Delete with an inline confirmation and Cancel action.
+Confirmed deletion uses a parameterized SQL DELETE by ID; successful responses are
+204 and missing rows return 404. The request helper handles empty 204 responses.
+After success, the UI reloads the first page and totals, preserving the category
+filter. On failure it retains the row and displays the error; timeout guidance asks
+for a refresh before retrying. Tests cover cancellation, successful removal and
+summary refresh, failed deletion, missing/invalid IDs, and preservation of other
+rows. All 10 backend integration tests and 15 interface tests pass, along with the
+backend package and frontend build. Tests use an isolated in-memory database or
+mocked HTTP; browser visual verification remains unavailable.

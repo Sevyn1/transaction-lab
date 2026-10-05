@@ -2,7 +2,7 @@
 
 [![Build and tests](https://github.com/Sevyn1/transaction-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/Sevyn1/transaction-lab/actions/workflows/ci.yml)
 
-A small portfolio application for exploring **fictional CAD expenses**. Java/Spring Boot exposes a validated REST API, React displays and adds expenses, and Python validates CSV input before submitting records. It demonstrates API design, SQL persistence, decimal arithmetic, data validation, and error handling in one runnable example.
+A small portfolio application for exploring **fictional CAD expenses**. Java/Spring Boot exposes a validated REST API, React displays, adds and deletes expenses, and Python validates CSV input before submitting records. It demonstrates API design, SQL persistence, decimal arithmetic, data validation, and error handling in one runnable example.
 
 Created as an AI-assisted portfolio project in October 2026. This is independent of TD and uses no bank or customer data. It is a local development demo, not a banking system.
 
@@ -60,6 +60,7 @@ CSV submission is row-by-row, not atomic. Duplicate references already in the da
 | GET | `/api/health` | Application health response |
 | GET | `/api/transactions?page=0&size=5&category=FOOD` | Date/id ordered results, count, and pagination |
 | POST | `/api/transactions` | Validated expense; 201 created, 400 invalid, 409 duplicate reference |
+| DELETE | `/api/transactions/{id}` | Remove an expense; 204 deleted, 404 missing, 400 invalid ID |
 | GET | `/api/summary?category=FOOD` | Count, exact total, and category totals |
 
 `category` is optional. Pages start at zero; page size is 1–100. Supported categories: FOOD, TRANSPORT, HOUSING, SHOPPING, OTHER. Only CAD is supported, so totals cannot accidentally mix currencies.
