@@ -161,7 +161,7 @@ export default function App() {
                 Previous
               </button>
               <span>
-                Page {page + 1} · {data.total} records
+                Page {page + 1} of {Math.max(1, Math.ceil(data.total / 5))} · {data.total} transactions
               </span>
               <button
                 disabled={(page + 1) * 5 >= data.total}
