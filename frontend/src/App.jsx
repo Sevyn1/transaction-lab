@@ -1,15 +1,10 @@
 import { useEffect, useState } from "react";
+import { request } from "./api.js";
 const categories = ["FOOD", "TRANSPORT", "HOUSING", "SHOPPING", "OTHER"];
 const money = (value) =>
   new Intl.NumberFormat("en-CA", { style: "currency", currency: "CAD" }).format(
     value,
   );
-async function request(url, options) {
-  const r = await fetch(url, options);
-  const data = await r.json();
-  if (!r.ok) throw new Error(data.error || "Request failed");
-  return data;
-}
 export default function App() {
   const [category, setCategory] = useState(""),
     [page, setPage] = useState(0),
@@ -22,14 +17,17 @@ export default function App() {
     [notice, setNotice] = useState("");
   useEffect(() => {
     let active = true;
+    const controller = new AbortController();
+    const options = { signal: controller.signal };
     setLoading(true);
     setError("");
     const filter = category ? `&category=${category}` : "";
     Promise.all([
-      request(`/api/transactions?page=${page}&size=5${filter}`),
-      request(`/api/summary${category ? "?category=" + category : ""}`),
+      request(`/api/transactions?page=${page}&size=5${filter}`, options),
+      request(`/api/summary${category ? "?category=" + category : ""}`, options),
     ])
       .then(([d, s]) => {
+        if (!d || !Array.isArray(d.items) || !s || typeof s.total !== "number" || typeof s.count !== "number") throw new Error("The service returned unexpected transaction data.");
         if (active) {
           setData(d);
           setSummary(s);
@@ -37,12 +35,14 @@ export default function App() {
       })
       .catch((e) => {
         if (active) setError(e.message);
+        controller.abort();
       })
       .finally(() => {
         if (active) setLoading(false);
       });
     return () => {
       active = false;
+      controller.abort();
     };
   }, [category, page, refresh]);
   async function add(event) {
@@ -99,7 +99,8 @@ export default function App() {
         <p role="status">Loading transactions…</p>
       ) : error ? (
         <div role="alert" className="error">
-          {error}. Start the API and try Refresh.
+          <p>{error}</p>
+          <button onClick={() => setRefresh((v) => v + 1)}>Retry</button>
         </div>
       ) : (
         <>

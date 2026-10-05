@@ -25,7 +25,7 @@ flowchart LR
     Migration[Flyway migrations] --> DB
 ```
 
-The frontend never fabricates success when the API fails. Category filters apply to both list and summary. Totals use `BigDecimal` and SQL `DECIMAL`, avoiding binary floating-point arithmetic in backend calculations. The UI converts amounts only for display.
+The frontend never fabricates success when the API fails. Requests have a 10-second deadline, stale loads are canceled when the filter/page changes, and a failed load offers Retry instead of remaining on Loading indefinitely. A timed-out save tells the user to refresh before retrying because the server may have already committed it. Category filters apply to both list and summary. Totals use `BigDecimal` and SQL `DECIMAL`, avoiding binary floating-point arithmetic in backend calculations. The UI converts amounts only for display.
 
 ## Run locally
 

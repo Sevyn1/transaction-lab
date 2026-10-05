@@ -1,6 +1,6 @@
 import React from "react";
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import App from "./App.jsx";
 const page = {
   items: [
@@ -15,7 +15,7 @@ const page = {
   total: 1,
 };
 const summary = { total: 12.5, count: 1 };
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers(); });
 describe("dashboard", () => {
   it("shows API data and disables empty pagination", async () => {
     vi.stubGlobal(
@@ -56,7 +56,7 @@ describe("dashboard", () => {
     await waitFor(() =>
       expect(fetch).toHaveBeenCalledWith(
         "/api/transactions?page=1&size=5",
-        undefined,
+        expect.objectContaining({ signal: expect.any(AbortSignal) }),
       ),
     );
     fireEvent.change(
@@ -66,8 +66,35 @@ describe("dashboard", () => {
     await waitFor(() =>
       expect(fetch).toHaveBeenCalledWith(
         "/api/transactions?page=0&size=5&category=FOOD",
-        undefined,
+        expect.objectContaining({ signal: expect.any(AbortSignal) }),
       ),
     );
   });
+});
+
+it("recovers from an initial load failure when Retry is selected", async () => {
+  let recovering=false;
+  vi.stubGlobal("fetch", vi.fn(async (url)=>recovering ? ({ok:true,json:async()=>url.includes("summary") ? summary : page}) : ({ok:false,json:async()=>({error:"Service unavailable"})})));
+  render(<App />);
+  expect(await screen.findByRole("alert")).toHaveTextContent("Service unavailable");
+  recovering=true;
+  fireEvent.click(screen.getByRole("button",{name:"Retry"}));
+  expect(await screen.findByText("Demo Cafe")).toBeInTheDocument();
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+});
+it("reports malformed API data instead of crashing the dashboard", async () => {
+  vi.stubGlobal("fetch",vi.fn(async()=>({ok:true,json:async()=>({unexpected:true})})));
+  render(<App />);
+  expect(await screen.findByRole("alert")).toHaveTextContent("unexpected transaction data");
+});
+
+it("leaves loading and offers Retry when requests never resolve", async () => {
+  vi.useFakeTimers();
+  vi.stubGlobal("fetch", vi.fn(()=>new Promise(()=>{})));
+  render(<App />);
+  expect(screen.getByRole("status")).toHaveTextContent("Loading transactions");
+  await act(async()=>{await vi.advanceTimersByTimeAsync(10000);});
+  expect(screen.queryByText("Loading transactions…")).not.toBeInTheDocument();
+  expect(screen.getByRole("alert")).toHaveTextContent("request timed out");
+  expect(screen.getByRole("button",{name:"Retry"})).toBeInTheDocument();
 });
