@@ -21,3 +21,16 @@ Not verified: authentication, public deployment, performance at scale, real fina
 When a loading problem was reported, the local backend summary and Vite-proxied transaction list both returned HTTP 200 with valid data. The frontend had no request deadline, leaving a permanently pending fetch on Loading indefinitely. Browser permission was declined, so the specific reported browser stall was not directly reproduced.
 
 Added a 10-second deadline covering both network and JSON parsing, cancellation of superseded/unmounted loads, response-shape checks, a visible Retry action, and a safe message for ambiguous timed-out writes. Twelve frontend tests now pass, including a permanently pending load leaving Loading, successful Retry recovery, stale-request cancellation and malformed-response handling. The production UI build passes. Direct live-browser verification remains pending permission.
+
+### Local timeout recovery — 5 October 2026
+
+The user reported repeated request timeouts. Temporary development-server logging
+confirmed the page's GET requests reached Vite and were forwarded, but received no
+upstream response before the page canceled them. Direct API and proxied command-line
+checks returned HTTP 200 in about 0.1 seconds. After restarting the long-running
+backend and setting the development proxy's `changeOrigin: true`, both subsequent
+page-originated requests completed with HTTP 200 in approximately 145 ms. These two
+interventions were applied together, so their individual effects are not isolated.
+The proxy also has an eight-second upstream timeout. Temporary diagnostic logging
+was removed; no request cookies or their values were recorded. Visual confirmation
+of the displayed dashboard remains pending because browser automation is blocked.
