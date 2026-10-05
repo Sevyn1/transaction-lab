@@ -1,0 +1,73 @@
+import React from "react";
+import { describe, it, expect, vi, afterEach } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import App from "./App.jsx";
+const page = {
+  items: [
+    {
+      id: 1,
+      bookedOn: "2020-01-01",
+      merchant: "Demo Cafe",
+      category: "FOOD",
+      amount: 12.5,
+    },
+  ],
+  total: 1,
+};
+const summary = { total: 12.5, count: 1 };
+afterEach(() => vi.unstubAllGlobals());
+describe("dashboard", () => {
+  it("shows API data and disables empty pagination", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url) => ({
+        ok: true,
+        json: async () => (url.includes("summary") ? summary : page),
+      })),
+    );
+    render(<App />);
+    expect(await screen.findByText("Demo Cafe")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Next" })).toBeDisabled();
+    expect(screen.getByText("Total expenses")).toBeInTheDocument();
+  });
+  it("surfaces an API failure instead of demo success", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: false,
+        json: async () => ({ error: "Service unavailable" }),
+      })),
+    );
+    render(<App />);
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Service unavailable",
+    );
+  });
+  it("resets to page zero when category changes", async () => {
+    const fetch = vi.fn(async (url) => ({
+      ok: true,
+      json: async () =>
+        url.includes("summary") ? summary : { ...page, total: 11 },
+    }));
+    vi.stubGlobal("fetch", fetch);
+    render(<App />);
+    await screen.findByText("Demo Cafe");
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/transactions?page=1&size=5",
+        undefined,
+      ),
+    );
+    fireEvent.change(
+      screen.getByLabelText("Category", { selector: ".toolbar select" }),
+      { target: { value: "FOOD" } },
+    );
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/transactions?page=0&size=5&category=FOOD",
+        undefined,
+      ),
+    );
+  });
+});
