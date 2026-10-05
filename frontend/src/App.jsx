@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { request } from "./api.js";
 const categories = ["FOOD", "TRANSPORT", "HOUSING", "SHOPPING", "OTHER"];
 const money = (value) =>
@@ -6,6 +6,7 @@ const money = (value) =>
     value,
   );
 export default function App() {
+  const deleteConfirmation = useRef(null);
   const [category, setCategory] = useState(""),
     [page, setPage] = useState(0),
     [data, setData] = useState(null),
@@ -19,6 +20,15 @@ export default function App() {
     [deleting, setDeleting] = useState(false),
     [deleteError, setDeleteError] = useState(""),
     [notice, setNotice] = useState("");
+  useEffect(() => {
+    if (!pendingDelete) return;
+    const confirmation = deleteConfirmation.current;
+    confirmation?.focus({ preventScroll: true });
+    confirmation?.scrollIntoView?.({
+      behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      block: "center",
+    });
+  }, [pendingDelete]);
   useEffect(() => {
     let active = true;
     const controller = new AbortController();
@@ -117,7 +127,7 @@ export default function App() {
         </button>
       </section>
       {!loading && !error && updatedAt && <p role="status">Updated at {updatedAt.toLocaleTimeString("en-CA")}</p>}
-      {pendingDelete && <section className="delete-confirm" aria-label="Confirm deletion">
+      {pendingDelete && <section ref={deleteConfirmation} tabIndex={-1} role="region" className="delete-confirm" aria-label="Confirm deletion">
         <p>Delete the {money(pendingDelete.amount)} expense at <strong>{pendingDelete.merchant}</strong>? This cannot be undone.</p>
         <button type="button" className="delete-button" disabled={deleting} onClick={remove}>{deleting ? "Deleting…" : "Confirm delete"}</button>{" "}
         <button type="button" disabled={deleting} onClick={() => { setPendingDelete(null); setDeleteError(""); }}>Cancel</button>
