@@ -13,4 +13,4 @@ Verified during creation on October 4, 2026:
 
 ![Dashboard showing the verified FOOD filter](dashboard.jpg)
 
-Not verified: authentication, public deployment, performance at scale, real financial data, or PostgreSQL compatibility. None are implemented or claimed. CI has the same build/test steps; its hosted status must be checked independently after publication.
+Not verified: authentication, public deployment, performance at scale, real financial data, or PostgreSQL compatibility. None are implemented or claimed. The initial GitHub Actions run also passed: https://github.com/Sevyn1/transaction-lab/actions/runs/37260738786.
